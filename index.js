@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -31,6 +31,7 @@ async function run() {
 
     const brandCollection = client.db("brandDB").collection("brands");
 
+
     // post brand name and image into database
 
     app.post('/brands', async (req, res) => {
@@ -45,6 +46,46 @@ async function run() {
       const result = await brandCollection.find().toArray();
       res.send(result)
     })
+
+
+    // posting data to database from add product page
+
+
+    app.post('/brands/add-product', async (req, res) => {
+      const { brandName, newProduct } = req.body;
+
+      try {
+        const query = { name: { $regex: new RegExp(brandName, 'i') } };
+        const brand = await brandCollection.findOne(query);
+
+        if (brand) {
+          brand.product.push(newProduct);
+          const result = await brandCollection.updateOne(query, { $set: { product: brand.product } });
+          res.send(result);
+        } else {
+          const newBrand = {
+            name: brandName,
+            product: [newProduct]
+          };
+          const newBrandResult = await brandCollection.insertOne(newBrand);
+          res.send(newBrandResult);
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // showing details data by id from database
+
+    app.get('/brands/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await brandCollection.findOne(query);
+      res.send(result)
+    })
+
+
 
 
 
