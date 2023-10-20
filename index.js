@@ -30,6 +30,7 @@ async function run() {
     client.connect();
 
     const brandCollection = client.db("brandDB").collection("brands");
+    const cartCollection = client.db("brandDB").collection("cart");
 
 
     // post brand name and image into database
@@ -86,6 +87,36 @@ async function run() {
     })
 
 
+
+    /* Add data to cart */
+
+    app.post('/carts', async (req, res) => {
+      const user = req.body;
+      const result = await cartCollection.insertOne(user);
+      console.log(result);
+      res.send(result);
+    })
+
+
+    app.get('/carts', async (req, res) => {
+      try {
+        const cartItems = await cartCollection.find({}).toArray();
+        res.json(cartItems);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'An error occurred while fetching cart items.' });
+      }
+    });
+
+
+    app.delete('/carts/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+  })
+
+    
 
 
 
