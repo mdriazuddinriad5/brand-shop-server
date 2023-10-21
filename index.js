@@ -15,6 +15,9 @@ app.use(cors());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ikmixap.mongodb.net/?retryWrites=true&w=majority`;
 
+
+
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -77,6 +80,8 @@ async function run() {
       }
     });
 
+
+
     // showing details data by id from database
 
     app.get('/brands/:id', async (req, res) => {
@@ -114,9 +119,55 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const result = await cartCollection.deleteOne(query);
       res.send(result);
-  })
+    })
 
-    
+
+
+    /* Update product related api */
+
+    app.get('/brands/:brandId/products/:index', async (req, res) => {
+      try {
+        const { brandId, index } = req.params;
+        const query = { _id: new ObjectId(brandId) };
+        const brand = await brandCollection.findOne(query);
+
+        if (brand && brand.product[index]) {
+          const product = brand.product[index];
+          res.json(product);
+        } else {
+          res.status(404).json({ message: 'Product not found' });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    app.put('/brands/update-product', async (req, res) => {
+      try {
+        const { brandId, index, updatedProduct } = req.body;
+        const query = { _id: new ObjectId(brandId) };
+        const update = { 
+          $set: 
+          { 
+            [`product.${index}`]: updatedProduct 
+          } 
+        };
+        const result = await brandCollection.updateOne(query, update);
+
+        if (result.modifiedCount === 1) {
+          res.json({ success: true, message: 'Product updated successfully' });
+        } else {
+          res.status(400).json({ success: false, message: 'Product update failed' });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    });
+
+
+
 
 
 
