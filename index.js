@@ -34,6 +34,7 @@ async function run() {
 
     const brandCollection = client.db("brandDB").collection("brands");
     const cartCollection = client.db("brandDB").collection("cart");
+    const clientReview= client.db("brandDB").collection("reviews");
 
 
     // post brand name and image into database
@@ -166,6 +167,19 @@ async function run() {
       }
     });
 
+
+    // client review
+
+    app.post('/review', async(req, res)=>{
+      const review= req.body;
+      const result = await clientReview.insertOne(review);
+      res.send(result);
+    })
+
+    app.get('/review', async (req, res) => {
+      const result = await clientReview.find().toArray();
+      res.send(result)
+    })
 
 
 
